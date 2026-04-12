@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SaaSGym — Test API</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: monospace; background: #0f172a; color: #e2e8f0; padding: 2rem; }
+        h1 { color: #38bdf8; margin-bottom: 1.5rem; font-size: 1.4rem; }
+        h2 { color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.8rem; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem; }
+        label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.3rem; }
+        input, select, textarea {
+            width: 100%; padding: 0.5rem 0.7rem; background: #0f172a;
+            border: 1px solid #334155; border-radius: 4px; color: #e2e8f0;
+            font-family: monospace; font-size: 0.9rem; margin-bottom: 0.8rem;
+        }
+        textarea { min-height: 80px; resize: vertical; }
+        button {
+            background: #0ea5e9; color: #fff; border: none; padding: 0.5rem 1.2rem;
+            border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 0.9rem;
+        }
+        button:hover { background: #38bdf8; }
+        button.danger { background: #ef4444; }
+        button.danger:hover { background: #f87171; }
+        .response {
+            margin-top: 1rem; background: #0f172a; border: 1px solid #334155;
+            border-radius: 4px; padding: 1rem; font-size: 0.82rem;
+            white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto;
+            display: none;
+        }
+        .status { font-size: 0.75rem; margin-top: 0.5rem; }
+        .ok { color: #4ade80; }
+        .err { color: #f87171; }
+        .token-box {
+            background: #164e63; border: 1px solid #0ea5e9; border-radius: 4px;
+            padding: 0.6rem; font-size: 0.8rem; word-break: break-all;
+            margin-bottom: 1rem; display: none;
+        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media(max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<h1>⚡ SaaSGym — Test API</h1>
+
+<div class="token-box" id="tokenBox">
+    🔑 <strong>Token activo:</strong> <span id="tokenDisplay"></span>
+</div>
+
+<!-- LOGIN -->
+<div class="card">
+    <h2>🔐 Login</h2>
+    <label>Email</label>
+    <input type="email" id="loginEmail" value="admin@gym.com">
+    <label>Password</label>
+    <input type="password" id="loginPass" value="password">
+    <button onclick="doLogin()">Iniciar sesión</button>
+    <div class="response" id="loginRes"></div>
+</div>
+
+<div class="grid">
+
+    <!-- CREAR SOCIO -->
+    <div class="card">
+        <h2>👤 Crear Socio</h2>
+        <label>Nombre</label>
+        <input type="text" id="socioNombre" value="Carlos Pérez">
+        <label>Email</label>
+        <input type="email" id="socioEmail" value="carlos@mail.com">
+        <label>Teléfono</label>
+        <input type="text" id="socioTel" value="2610001234">
+        <button onclick="crearSocio()">Crear</button>
+        <div class="response" id="socioRes"></div>
+    </div>
+
+    <!-- LISTAR SOCIOS -->
+    <div class="card">
+        <h2>📋 Listar Socios</h2>
+        <label>Filtro estado (opcional)</label>
+        <select id="socioEstado">
+            <option value="">— todos —</option>
+            <option value="activo">activo</option>
+            <option value="inactivo">inactivo</option>
+            <option value="suspendido">suspendido</option>
+        </select>
+        <button onclick="listarSocios()">Listar</button>
+        <div class="response" id="listaSociosRes"></div>
+    </div>
+
+    <!-- REGISTRAR PAGO -->
+    <div class="card">
+        <h2>💰 Registrar Pago</h2>
+        <label>ID Socio</label>
+        <input type="number" id="pagoSocioId" value="1">
+        <label>Monto</label>
+        <input type="number" id="pagoMonto" value="5000" step="0.01">
+        <label>Método</label>
+        <select id="pagoMetodo">
+            <option value="efectivo">efectivo</option>
+            <option value="transferencia">transferencia</option>
+            <option value="tarjeta">tarjeta</option>
+            <option value="otro">otro</option>
+        </select>
+        <label>Concepto</label>
+        <input type="text" id="pagoConcepto" value="Cuota mensual">
+        <button onclick="registrarPago()">Registrar</button>
+        <div class="response" id="pagoRes"></div>
+    </div>
+
+    <!-- REGISTRAR ASISTENCIA -->
+    <div class="card">
+        <h2>🏃 Registrar Asistencia</h2>
+        <label>ID Socio</label>
+        <input type="number" id="asistenSocioId" value="1">
+        <button onclick="registrarAsistencia()">Registrar entrada ahora</button>
+        <div class="response" id="asisRes"></div>
+    </div>
+
+    <!-- CREAR RUTINA -->
+    <div class="card">
+        <h2>💪 Crear Rutina</h2>
+        <label>ID Socio</label>
+        <input type="number" id="rutinaSocioId" value="1">
+        <label>Nombre rutina</label>
+        <input type="text" id="rutinaNombre" value="Rutina Fuerza A">
+        <label>Ejercicios (JSON)</label>
+        <textarea id="rutinaEjercicios">[
+  {"nombre":"Sentadilla","series":4,"repeticiones":8,"grupo_muscular":"Piernas"},
+  {"nombre":"Press banca","series":3,"repeticiones":10,"grupo_muscular":"Pecho"}
+]</textarea>
+        <button onclick="crearRutina()">Crear</button>
+        <div class="response" id="rutinaRes"></div>
+    </div>
+
+    <!-- CHAT IA -->
+    <div class="card">
+        <h2>🤖 Chat IA</h2>
+        <label>ID Socio</label>
+        <input type="number" id="iaSocioId" value="1">
+        <label>Mensaje</label>
+        <textarea id="iaMensaje">¿Qué ejercicios me recomiendas para ganar masa muscular?</textarea>
+        <button onclick="chatIa()">Enviar mensaje</button>
+        <div class="response" id="iaRes"></div>
+    </div>
+
+</div>
+
+<!-- LOGOUT -->
+<div class="card">
+    <h2>🚪 Logout</h2>
+    <button class="danger" onclick="doLogout()">Cerrar sesión</button>
+    <div class="response" id="logoutRes"></div>
+</div>
+
+<script>
+    const BASE = '/api';
+    let token = localStorage.getItem('saasgym_token') || null;
+
+    function updateTokenBox() {
+        const box = document.getElementById('tokenBox');
+        const disp = document.getElementById('tokenDisplay');
+        if (token) {
+            box.style.display = 'block';
+            disp.textContent = token.substring(0, 40) + '...';
+        } else {
+            box.style.display = 'none';
+        }
+    }
+    updateTokenBox();
+
+    function showResponse(elId, data, status) {
+        const el = document.getElementById(elId);
+        el.style.display = 'block';
+        const color = status >= 200 && status < 300 ? 'ok' : 'err';
+        el.innerHTML = `<span class="status ${color}">HTTP ${status}</span>\n` + JSON.stringify(data, null, 2);
+    }
+
+    async function apiFetch(method, path, body = null) {
+        const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const opts = { method, headers };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(BASE + path, opts);
+        const data = await res.json().catch(() => ({}));
+        return { data, status: res.status };
+    }
+
+    async function doLogin() {
+        const { data, status } = await apiFetch('POST', '/login', {
+            email: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPass').value,
+        });
+        showResponse('loginRes', data, status);
+        if (data.token) {
+            token = data.token;
+            localStorage.setItem('saasgym_token', token);
+            updateTokenBox();
+        }
+    }
+
+    async function doLogout() {
+        const { data, status } = await apiFetch('POST', '/logout');
+        showResponse('logoutRes', data, status);
+        token = null;
+        localStorage.removeItem('saasgym_token');
+        updateTokenBox();
+    }
+
+    async function crearSocio() {
+        const { data, status } = await apiFetch('POST', '/socios', {
+            nombre: document.getElementById('socioNombre').value,
+            email: document.getElementById('socioEmail').value,
+            telefono: document.getElementById('socioTel').value,
+        });
+        showResponse('socioRes', data, status);
+    }
+
+    async function listarSocios() {
+        const estado = document.getElementById('socioEstado').value;
+        const qs = estado ? `?estado=${estado}` : '';
+        const { data, status } = await apiFetch('GET', '/socios' + qs);
+        showResponse('listaSociosRes', data, status);
+    }
+
+    async function registrarPago() {
+        const today = new Date().toISOString().split('T')[0];
+        const { data, status } = await apiFetch('POST', '/pagos', {
+            socio_id: parseInt(document.getElementById('pagoSocioId').value),
+            monto: parseFloat(document.getElementById('pagoMonto').value),
+            fecha_pago: today,
+            metodo: document.getElementById('pagoMetodo').value,
+            concepto: document.getElementById('pagoConcepto').value,
+        });
+        showResponse('pagoRes', data, status);
+    }
+
+    async function registrarAsistencia() {
+        const { data, status } = await apiFetch('POST', '/asistencias', {
+            socio_id: parseInt(document.getElementById('asistenSocioId').value),
+        });
+        showResponse('asisRes', data, status);
+    }
+
+    async function crearRutina() {
+        let ejercicios = [];
+        try { ejercicios = JSON.parse(document.getElementById('rutinaEjercicios').value); } catch(e) {}
+        const { data, status } = await apiFetch('POST', '/rutinas', {
+            socio_id: parseInt(document.getElementById('rutinaSocioId').value),
+            nombre: document.getElementById('rutinaNombre').value,
+            ejercicios,
+        });
+        showResponse('rutinaRes', data, status);
+    }
+
+    async function chatIa() {
+        const { data, status } = await apiFetch('POST', '/ia/chat', {
+            socio_id: parseInt(document.getElementById('iaSocioId').value),
+            mensaje_usuario: document.getElementById('iaMensaje').value,
+        });
+        showResponse('iaRes', data, status);
+    }
+</script>
+
+</body>
+</html>

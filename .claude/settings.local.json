@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer --version)",
+      "Bash(composer create-project:*)",
+      "Bash(php artisan:*)",
+      "Bash(composer require:*)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Http/Controllers/Api/AuthController.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Http/Controllers/Api/UserController.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Http/Controllers/Api/PagoController.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Http/Middleware/EsAdmin.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Models/Socio.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Models/Pago.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Models/Asistencia.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Models/Rutina.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Models/RutinaEjercicio.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Http/Controllers/Api/RutinaController.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Http/Requests/Socio/StoreSocioRequest.php)",
+      "Bash(php -l /c/xampp/htdocs/SaaSGym/app/Http/Requests/Rutina/UpdateRutinaRequest.php)",
+      "Bash(grep -l \"HasFactory\" /c/xampp/htdocs/SaaSGym/app/Models/*.php)",
+      "Bash(php -r \"require ''''vendor/autoload.php''''; $app = require ''''bootstrap/app.php''''; echo ''''OK'''';\")",
+      "Bash(APP_ENV=testing php artisan route:list --path=api)"
+    ]
+  }
+}
