@@ -30,6 +30,10 @@ async function load() {
         });
         socios.value = data.data;
         meta.value = data.meta;
+    } catch (e) {
+        socios.value = [];
+        meta.value = { current_page: 1, last_page: 1, total: 0 };
+        ui.toast(e.response?.data?.message || 'No se pudieron cargar los socios.', 'error');
     } finally {
         loading.value = false;
     }
@@ -49,7 +53,18 @@ function estadoVariant(e) {
 
 function formatDate(d) {
     if (!d) return '—';
-    return new Date(d + 'T00:00:00').toLocaleDateString('es-AR');
+    const value = String(d);
+    let normalized = value;
+
+    // YYYY-MM-DD should be treated as local date (not UTC) to avoid -1 day shifts.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        normalized = `${value}T00:00:00`;
+    } else if (value.includes(' ')) {
+        normalized = value.replace(' ', 'T');
+    }
+
+    const dt = new Date(normalized);
+    return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('es-AR');
 }
 
 function confirmDelete(socio) {
@@ -161,6 +176,8 @@ function avatarColor(id) { return colors[id % colors.length]; }
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Socio</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">Email</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Teléfono</th>
+                            <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Último pago</th>
+                            <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Próximo pago</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Estado</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Alta</th>
                             <th class="px-4 py-3 w-24"></th>
@@ -189,6 +206,8 @@ function avatarColor(id) { return colors[id % colors.length]; }
                             </td>
                             <td class="px-4 py-3.5 text-sm text-gray-500 hidden md:table-cell">{{ socio.email || '—' }}</td>
                             <td class="px-4 py-3.5 text-sm text-gray-500 hidden sm:table-cell">{{ socio.telefono || '—' }}</td>
+                            <td class="px-4 py-3.5 text-sm text-gray-500 hidden xl:table-cell">{{ formatDate(socio.fecha_ultimo_pago) }}</td>
+                            <td class="px-4 py-3.5 text-sm text-gray-500 hidden xl:table-cell">{{ formatDate(socio.fecha_proximo_pago) }}</td>
                             <td class="px-4 py-3.5">
                                 <BaseBadge :variant="estadoVariant(socio.estado)">{{ socio.estado }}</BaseBadge>
                             </td>

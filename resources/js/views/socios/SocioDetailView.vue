@@ -81,7 +81,18 @@ function metodoBadge(m) {
 
 function formatDate(d) {
     if (!d) return '—';
-    return new Date(d + 'T00:00:00').toLocaleDateString('es-AR');
+    const value = String(d);
+    let normalized = value;
+
+    // YYYY-MM-DD should be treated as local date (not UTC) to avoid -1 day shifts.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        normalized = `${value}T00:00:00`;
+    } else if (value.includes(' ')) {
+        normalized = value.replace(' ', 'T');
+    }
+
+    const dt = new Date(normalized);
+    return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('es-AR');
 }
 
 function formatDateTime(d) {
@@ -167,7 +178,7 @@ const totalPagado = computed(() => pagos.value.reduce((s, p) => s + p.monto, 0))
                             {{ formatDate(socio.fecha_nacimiento) }}
                         </span>
                         <span class="flex items-center gap-1.5 text-sm text-gray-400">
-                            Alta: {{ formatDate(socio.created_at?.split('T')[0]) }}
+                            Alta: {{ formatDate(socio.created_at) }}
                         </span>
                     </div>
                 </div>
@@ -222,7 +233,7 @@ const totalPagado = computed(() => pagos.value.reduce((s, p) => s + p.monto, 0))
                             </div>
                             <div>
                                 <dt class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Fecha de alta</dt>
-                                <dd class="text-sm text-gray-700">{{ formatDate(socio.created_at?.split('T')[0]) }}</dd>
+                                <dd class="text-sm text-gray-700">{{ formatDate(socio.created_at) }}</dd>
                             </div>
                         </dl>
                     </div>
