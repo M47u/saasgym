@@ -8,9 +8,11 @@ use App\Http\Requests\Pago\UpdatePagoRequest;
 use App\Http\Resources\PagoResource;
 use App\Models\Pago;
 use App\Models\Socio;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\ValidationException;
 
 class PagoController extends Controller
 {
@@ -32,8 +34,34 @@ class PagoController extends Controller
 
         abort_if($socio->gimnasio_id !== $request->user()->gimnasio_id, 403, 'Sin autorización.');
 
+        $fechaPagoSolicitada = Carbon::parse($request->fecha_pago)->startOfMonth();
+
+        $ultimoPago = Pago::where('gimnasio_id', $request->user()->gimnasio_id)
+            ->where('socio_id', $request->socio_id)
+            ->latest('fecha_pago')
+            ->first();
+
+        if ($ultimoPago) {
+            $ultimoMesPagado = Carbon::parse($ultimoPago->fecha_pago)->startOfMonth();
+
+            // Si ya tiene pago en ese mes (o uno posterior), solo permitimos registrar meses siguientes.
+            if ($fechaPagoSolicitada->lessThanOrEqualTo($ultimoMesPagado)) {
+                throw ValidationException::withMessages([
+                    'fecha_pago' => [
+                        sprintf(
+                            'El socio ya tiene pago registrado hasta %s. Para pagar meses posteriores, seleccioná una fecha de un mes siguiente.',
+                            $ultimoMesPagado->locale('es')->translatedFormat('F Y')
+                        ),
+                    ],
+                ]);
+            }
+        }
+
+        $data = $request->validated();
+        $data['fecha_pago'] = Carbon::parse($data['fecha_pago'])->startOfMonth()->toDateString();
+
         $pago = Pago::create([
-            ...$request->validated(),
+            ...$data,
             'gimnasio_id' => $request->user()->gimnasio_id,
         ]);
 
@@ -51,7 +79,13 @@ class PagoController extends Controller
     {
         abort_if($pago->gimnasio_id !== $request->user()->gimnasio_id, 403, 'Sin autorización.');
 
-        $pago->update($request->validated());
+        $data = $request->validated();
+
+        if (isset($data['fecha_pago'])) {
+            $data['fecha_pago'] = Carbon::parse($data['fecha_pago'])->startOfMonth()->toDateString();
+        }
+
+        $pago->update($data);
 
         return response()->json(new PagoResource($pago->load('socio')));
     }

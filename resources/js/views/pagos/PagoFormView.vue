@@ -20,7 +20,7 @@ const metodos = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
 const form = ref({
     socio_id:      '',
     monto:         '',
-    fecha_pago:    new Date().toISOString().split('T')[0],
+    fecha_pago:    new Date().toISOString().slice(0, 7),
     metodo:        'efectivo',
     concepto:      '',
     observaciones: '',
@@ -41,7 +41,7 @@ onMounted(async () => {
         form.value = {
             socio_id:      p.socio_id || '',
             monto:         p.monto || '',
-            fecha_pago:    p.fecha_pago || '',
+            fecha_pago:    p.periodo_pago || (p.fecha_pago ? String(p.fecha_pago).slice(0, 7) : ''),
             metodo:        p.metodo || 'efectivo',
             concepto:      p.concepto || '',
             observaciones: p.observaciones || '',
@@ -58,11 +58,19 @@ async function submit() {
     errors.value = {};
     saving.value = true;
     try {
+        const payload = {
+            ...form.value,
+            // Store period as first day of month in backend.
+            fecha_pago: /^\d{4}-\d{2}$/.test(String(form.value.fecha_pago))
+                ? `${form.value.fecha_pago}-01`
+                : form.value.fecha_pago,
+        };
+
         if (isEdit.value) {
-            await axios.put(`/pagos/${route.params.id}`, form.value);
+            await axios.put(`/pagos/${route.params.id}`, payload);
             ui.toast('Pago actualizado.', 'success');
         } else {
-            await axios.post('/pagos', form.value);
+            await axios.post('/pagos', payload);
             ui.toast('Pago registrado.', 'success');
         }
         router.push('/pagos');
@@ -146,11 +154,11 @@ function fieldError(field) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                            Fecha de pago <span class="text-red-500">*</span>
+                            Período a pagar <span class="text-red-500">*</span>
                         </label>
                         <input
                             v-model="form.fecha_pago"
-                            type="date"
+                            type="month"
                             required
                             :class="['w-full px-3.5 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition', fieldError('fecha_pago') ? 'border-red-300 bg-red-50' : 'border-gray-300']"
                         />

@@ -18,11 +18,13 @@ class PagoResource extends JsonResource
             ]),
             'monto'         => (float) $this->monto,
             'fecha_pago'    => $this->fecha_pago->toDateString(),
+            'periodo_pago'  => $this->fecha_pago->format('Y-m'),
             'metodo'        => $this->metodo,
             'concepto'      => $this->concepto,
             'observaciones' => $this->observaciones,
             'gimnasio_id'   => $this->gimnasio_id,
             'created_at'    => $this->created_at->toDateTimeString(),
+            'fecha_registro' => $this->created_at->toDateTimeString(),
         ];
     }
 }

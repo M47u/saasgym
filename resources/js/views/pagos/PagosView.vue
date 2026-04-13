@@ -44,6 +44,22 @@ function formatDate(d) {
     return new Date(d + 'T00:00:00').toLocaleDateString('es-AR');
 }
 
+function formatDateTime(d) {
+    if (!d) return '—';
+    const normalized = String(d).includes(' ') ? String(d).replace(' ', 'T') : d;
+    const dt = new Date(normalized);
+    return Number.isNaN(dt.getTime())
+        ? '—'
+        : dt.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function formatPeriodo(periodo) {
+    if (!periodo) return '—';
+    const [year, month] = String(periodo).split('-');
+    if (!year || !month) return '—';
+    return `${month}/${year}`;
+}
+
 function formatMoney(v) {
     return '$' + Number(v).toLocaleString('es-AR', { minimumFractionDigits: 2 });
 }
@@ -130,9 +146,10 @@ const totalPagina = () => pagos.value.reduce((s, p) => s + p.monto, 0);
                         <tr class="border-b border-gray-100">
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Socio</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Monto</th>
-                            <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Fecha</th>
+                            <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Período</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Método</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">Concepto</th>
+                            <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Registrado</th>
                             <th class="px-4 py-3 w-20"></th>
                         </tr>
                     </thead>
@@ -148,11 +165,12 @@ const totalPagina = () => pagos.value.reduce((s, p) => s + p.monto, 0);
                             <td class="px-4 py-3.5">
                                 <span class="text-sm font-semibold text-emerald-700">{{ formatMoney(pago.monto) }}</span>
                             </td>
-                            <td class="px-4 py-3.5 text-sm text-gray-500 hidden sm:table-cell">{{ formatDate(pago.fecha_pago) }}</td>
+                            <td class="px-4 py-3.5 text-sm text-gray-500 hidden sm:table-cell">{{ formatPeriodo(pago.periodo_pago) }}</td>
                             <td class="px-4 py-3.5">
                                 <BaseBadge :variant="metodoBadgeVariant(pago.metodo)" class="capitalize">{{ pago.metodo }}</BaseBadge>
                             </td>
                             <td class="px-4 py-3.5 text-sm text-gray-500 hidden md:table-cell">{{ pago.concepto || '—' }}</td>
+                            <td class="px-4 py-3.5 text-sm text-gray-500 hidden lg:table-cell">{{ formatDateTime(pago.fecha_registro || pago.created_at) }}</td>
                             <td class="px-4 py-3.5">
                                 <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
@@ -181,7 +199,7 @@ const totalPagina = () => pagos.value.reduce((s, p) => s + p.monto, 0);
                         <tr class="border-t border-gray-100 bg-gray-50/50">
                             <td class="px-6 py-3 text-xs text-gray-400 font-medium">Total página</td>
                             <td class="px-4 py-3 text-sm font-bold text-emerald-700">{{ formatMoney(totalPagina()) }}</td>
-                            <td colspan="4"></td>
+                            <td colspan="5"></td>
                         </tr>
                     </tfoot>
                 </table>
