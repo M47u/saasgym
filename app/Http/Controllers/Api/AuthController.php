@@ -47,18 +47,24 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         if (! Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Credenciales incorrectas.',
-            ], 401);
+            return response()->json(['message' => 'Credenciales incorrectas.'], 401);
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         if (! $user->activo) {
             Auth::logout();
-            return response()->json([
-                'message' => 'Tu cuenta está desactivada.',
-            ], 403);
+            return response()->json(['message' => 'Tu cuenta está desactivada.'], 403);
+        }
+
+        // For gym users, also verify the gimnasio is active
+        if ($user->isGimnasioUser()) {
+            $user->load('gimnasio');
+            if ($user->gimnasio === null || ! $user->gimnasio->activo) {
+                Auth::logout();
+                return response()->json(['message' => 'El gimnasio está desactivado. Contactá al super administrador.'], 403);
+            }
         }
 
         $token = $user->createToken('api-token')->plainTextToken;

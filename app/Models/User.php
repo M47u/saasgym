@@ -46,6 +46,13 @@ class User extends Authenticatable
         return $this->hasMany(Rutina::class, 'entrenador_id');
     }
 
+    // ─── Role helpers ───────────────────────────────────────────────────────
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->rol === 'super_admin';
+    }
+
     public function isAdmin(): bool
     {
         return $this->rol === 'admin';
@@ -54,5 +61,11 @@ class User extends Authenticatable
     public function isEntrenador(): bool
     {
         return $this->rol === 'entrenador';
+    }
+
+    /** True for any user that belongs to a gimnasio (admin or entrenador). */
+    public function isGimnasioUser(): bool
+    {
+        return $this->gimnasio_id !== null;
     }
 }

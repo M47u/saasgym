@@ -17,7 +17,7 @@ class StoreUserRequest extends FormRequest
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'rol'      => ['sometimes', 'in:admin,entrenador'],
+            'rol'      => ['sometimes', 'in:admin,entrenador'], // super_admin cannot be created via this endpoint
         ];
     }
 }

@@ -25,13 +25,22 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'gimnasio_id' => \App\Models\Gimnasio::factory(),
-            'name'        => fake()->name(),
-            'email'       => fake()->unique()->safeEmail(),
-            'password'    => static::$password ??= Hash::make('password'),
-            'rol'         => 'entrenador',
-            'activo'      => true,
+            'gimnasio_id'    => \App\Models\Gimnasio::factory(),
+            'name'           => fake()->name(),
+            'email'          => fake()->unique()->safeEmail(),
+            'password'       => static::$password ??= Hash::make('password'),
+            'rol'            => 'entrenador',
+            'activo'         => true,
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /** State for creating a super_admin user (no gimnasio). */
+    public function superAdmin(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'gimnasio_id' => null,
+            'rol'         => 'super_admin',
+        ]);
     }
 }

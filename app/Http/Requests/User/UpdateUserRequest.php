@@ -20,7 +20,7 @@ class UpdateUserRequest extends FormRequest
             'name'     => ['sometimes', 'string', 'max:255'],
             'email'    => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'password' => ['sometimes', 'string', 'min:8'],
-            'rol'      => ['sometimes', 'in:admin,entrenador'],
+            'rol'      => ['sometimes', 'in:admin,entrenador'], // super_admin cannot be assigned via gym user management
             'activo'   => ['sometimes', 'boolean'],
         ];
     }

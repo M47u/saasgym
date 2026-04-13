@@ -6,56 +6,68 @@ use App\Http\Controllers\Api\ChatIaController;
 use App\Http\Controllers\Api\PagoController;
 use App\Http\Controllers\Api\RutinaController;
 use App\Http\Controllers\Api\SocioController;
+use App\Http\Controllers\Api\SuperAdmin\GimnasioController as SuperAdminGimnasioController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes - SaaSGym MVP
+| API Routes - SaaSGym
 |--------------------------------------------------------------------------
 */
 
-// Autenticación (pública)
+// ── Public ────────────────────────────────────────────────────────────────
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
-// Rutas protegidas con Sanctum
+// ── Authenticated ─────────────────────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
 
-    // Auth
+    // Shared auth endpoints (all authenticated roles)
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-    // Socios (admin y entrenador pueden ver/crear/editar; solo admin elimina)
-    Route::apiResource('socios', SocioController::class)->except(['destroy']);
-    Route::delete('/socios/{socio}', [SocioController::class, 'destroy'])->middleware('es_admin');
-
-    // Pagos (solo admin)
-    Route::middleware('es_admin')->group(function () {
-        Route::get('/pagos', [PagoController::class, 'index']);
-        Route::post('/pagos', [PagoController::class, 'store']);
-        Route::get('/pagos/{pago}', [PagoController::class, 'show']);
-        Route::put('/pagos/{pago}', [PagoController::class, 'update']);
-        Route::delete('/pagos/{pago}', [PagoController::class, 'destroy']);
+    // ── Super Admin routes ────────────────────────────────────────────────
+    Route::middleware('es_super_admin')->prefix('super-admin')->group(function () {
+        Route::apiResource('gimnasios', SuperAdminGimnasioController::class);
+        Route::post('gimnasios/{gimnasio}/activar',    [SuperAdminGimnasioController::class, 'activar']);
+        Route::post('gimnasios/{gimnasio}/desactivar', [SuperAdminGimnasioController::class, 'desactivar']);
     });
 
-    // Asistencias (admin y entrenador)
-    Route::get('/asistencias', [AsistenciaController::class, 'index']);
-    Route::post('/asistencias', [AsistenciaController::class, 'store']);
+    // ── Gym-tenant routes (requires active gimnasio; blocks super_admin) ──
+    Route::middleware('gimnasio_activo')->group(function () {
 
-    // Rutinas (admin y entrenador)
-    Route::apiResource('rutinas', RutinaController::class);
+        // Socios (admin y entrenador pueden ver/crear/editar; solo admin elimina)
+        Route::apiResource('socios', SocioController::class)->except(['destroy']);
+        Route::delete('/socios/{socio}', [SocioController::class, 'destroy'])->middleware('es_admin');
 
-    // Usuarios/Staff (solo admin)
-    Route::middleware('es_admin')->group(function () {
-        Route::get('/usuarios', [UserController::class, 'index']);
-        Route::post('/usuarios', [UserController::class, 'store']);
-        Route::get('/usuarios/{user}', [UserController::class, 'show']);
-        Route::put('/usuarios/{user}', [UserController::class, 'update']);
-        Route::delete('/usuarios/{user}', [UserController::class, 'destroy']);
+        // Pagos (solo admin)
+        Route::middleware('es_admin')->group(function () {
+            Route::get('/pagos',          [PagoController::class, 'index']);
+            Route::post('/pagos',         [PagoController::class, 'store']);
+            Route::get('/pagos/{pago}',   [PagoController::class, 'show']);
+            Route::put('/pagos/{pago}',   [PagoController::class, 'update']);
+            Route::delete('/pagos/{pago}',[PagoController::class, 'destroy']);
+        });
+
+        // Asistencias (admin y entrenador)
+        Route::get('/asistencias',  [AsistenciaController::class, 'index']);
+        Route::post('/asistencias', [AsistenciaController::class, 'store']);
+
+        // Rutinas (admin y entrenador)
+        Route::apiResource('rutinas', RutinaController::class);
+
+        // Usuarios/Staff (solo admin)
+        Route::middleware('es_admin')->group(function () {
+            Route::get('/usuarios',         [UserController::class, 'index']);
+            Route::post('/usuarios',        [UserController::class, 'store']);
+            Route::get('/usuarios/{user}',  [UserController::class, 'show']);
+            Route::put('/usuarios/{user}',  [UserController::class, 'update']);
+            Route::delete('/usuarios/{user}',[UserController::class, 'destroy']);
+        });
+
+        // IA Chat (admin y entrenador)
+        Route::post('/ia/chat',      [ChatIaController::class, 'chat'])->middleware('throttle:ia');
+        Route::get('/ia/historial',  [ChatIaController::class, 'index']);
     });
-
-    // IA Chat (admin y entrenador)
-    Route::post('/ia/chat', [ChatIaController::class, 'chat'])->middleware('throttle:ia');
-    Route::get('/ia/historial', [ChatIaController::class, 'index']);
 });

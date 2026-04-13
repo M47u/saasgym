@@ -11,6 +11,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(SuperAdminSeeder::class);
+
         // Gimnasio de prueba
         $gimnasio = Gimnasio::create([
             'nombre'    => 'Gimnasio Demo',
