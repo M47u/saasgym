@@ -14,6 +14,7 @@ const title = computed(() => isEdit.value ? 'Editar socio' : 'Nuevo socio');
 const loading = ref(false);
 const saving = ref(false);
 const errors = ref({});
+const planes = ref([]);
 
 const form = ref({
     nombre: '',
@@ -21,9 +22,20 @@ const form = ref({
     telefono: '',
     fecha_nacimiento: '',
     estado: 'activo',
+    plan_id: '',
 });
 
+async function loadPlanes() {
+    try {
+        const { data } = await axios.get('/planes', { params: { solo_activos: true } });
+        planes.value = data.data ?? data;
+    } catch {
+        // silencioso: no bloquear el formulario si fallan los planes
+    }
+}
+
 onMounted(async () => {
+    await loadPlanes();
     if (!isEdit.value) return;
     loading.value = true;
     try {
@@ -35,6 +47,7 @@ onMounted(async () => {
             telefono: s.telefono || '',
             fecha_nacimiento: s.fecha_nacimiento || '',
             estado: s.estado || 'activo',
+            plan_id: s.plan_id || '',
         };
     } catch {
         ui.toast('Error al cargar el socio.', 'error');
@@ -48,11 +61,15 @@ async function submit() {
     errors.value = {};
     saving.value = true;
     try {
+        const payload = {
+            ...form.value,
+            plan_id: form.value.plan_id || null,
+        };
         if (isEdit.value) {
-            await axios.put(`/socios/${route.params.id}`, form.value);
+            await axios.put(`/socios/${route.params.id}`, payload);
             ui.toast('Socio actualizado correctamente.', 'success');
         } else {
-            const { data } = await axios.post('/socios', form.value);
+            const { data } = await axios.post('/socios', payload);
             ui.toast('Socio creado correctamente.', 'success');
             router.push(`/socios/${(data.data ?? data).id}`);
             return;
@@ -153,6 +170,25 @@ function fieldError(field) {
                         />
                         <p v-if="fieldError('fecha_nacimiento')" class="mt-1 text-xs text-red-600">{{ fieldError('fecha_nacimiento') }}</p>
                     </div>
+                </div>
+
+                <!-- Plan -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Plan</label>
+                    <select
+                        v-model="form.plan_id"
+                        :class="['w-full px-3.5 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition bg-white', fieldError('plan_id') ? 'border-red-300 bg-red-50' : 'border-gray-300']"
+                    >
+                        <option value="">Sin plan asignado</option>
+                        <option v-for="p in planes" :key="p.id" :value="p.id">
+                            {{ p.nombre }}{{ p.precio !== null ? ` — $${Number(p.precio).toLocaleString('es-AR')}` : '' }}
+                        </option>
+                    </select>
+                    <p v-if="fieldError('plan_id')" class="mt-1 text-xs text-red-600">{{ fieldError('plan_id') }}</p>
+                    <p v-if="planes.length === 0" class="mt-1 text-xs text-gray-400">
+                        No hay planes activos.
+                        <router-link to="/planes/nuevo" class="text-violet-600 hover:underline">Crear uno</router-link>
+                    </p>
                 </div>
 
                 <!-- Estado -->

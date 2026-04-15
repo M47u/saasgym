@@ -14,6 +14,7 @@ class Socio extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'gimnasio_id',
+        'plan_id',
         'nombre',
         'email',
         'telefono',
@@ -28,6 +29,11 @@ class Socio extends Model
     public function gimnasio(): BelongsTo
     {
         return $this->belongsTo(Gimnasio::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
     }
 
     public function pagos(): HasMany

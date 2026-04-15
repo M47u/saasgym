@@ -29,6 +29,10 @@ class UpdateSocioRequest extends FormRequest
             'telefono'         => ['sometimes', 'nullable', 'string', 'max:30'],
             'estado'           => ['sometimes', 'in:activo,inactivo,suspendido'],
             'fecha_nacimiento' => ['sometimes', 'nullable', 'date', 'before:today'],
+            'plan_id'          => [
+                'sometimes', 'nullable', 'integer',
+                Rule::exists('planes', 'id')->where('gimnasio_id', $gimnasioId)->whereNull('deleted_at'),
+            ],
         ];
     }
 }

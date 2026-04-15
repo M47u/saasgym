@@ -125,6 +125,26 @@ const routes = [
         meta: { requiresAuth: true, requiresGym: true },
     },
 
+    // ── Planes ────────────────────────────────────────────────────────────
+    {
+        path: '/planes',
+        name: 'planes',
+        component: () => import('@/views/planes/PlanesView.vue'),
+        meta: { requiresAuth: true, requiresGym: true },
+    },
+    {
+        path: '/planes/nuevo',
+        name: 'planes.create',
+        component: () => import('@/views/planes/PlanFormView.vue'),
+        meta: { requiresAuth: true, requiresGym: true },
+    },
+    {
+        path: '/planes/:id/editar',
+        name: 'planes.edit',
+        component: () => import('@/views/planes/PlanFormView.vue'),
+        meta: { requiresAuth: true, requiresGym: true },
+    },
+
     // ── Chat IA ───────────────────────────────────────────────────────────
     {
         path: '/ia/chat',

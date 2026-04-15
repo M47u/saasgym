@@ -25,6 +25,10 @@ class StoreSocioRequest extends FormRequest
             'telefono'         => ['nullable', 'string', 'max:30'],
             'estado'           => ['sometimes', 'in:activo,inactivo,suspendido'],
             'fecha_nacimiento' => ['nullable', 'date', 'before:today'],
+            'plan_id'          => [
+                'nullable', 'integer',
+                Rule::exists('planes', 'id')->where('gimnasio_id', $gimnasioId)->whereNull('deleted_at'),
+            ],
         ];
     }
 }

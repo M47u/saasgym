@@ -38,6 +38,13 @@ class SocioResource extends JsonResource
             'estado'           => $this->estado,
             'fecha_nacimiento' => $this->fecha_nacimiento?->toDateString(),
             'gimnasio_id'      => $this->gimnasio_id,
+            'plan_id'          => $this->plan_id,
+            'plan'             => $this->whenLoaded('plan', fn() => $this->plan ? [
+                'id'     => $this->plan->id,
+                'nombre' => $this->plan->nombre,
+                'precio' => $this->plan->precio !== null ? (float) $this->plan->precio : null,
+                'activo' => $this->plan->activo,
+            ] : null),
             'created_at'       => $this->created_at->toDateTimeString(),
             'fecha_ultimo_pago'  => $fechaUltimoPago,
             'fecha_proximo_pago' => $this->calcularProximoPago($fechaUltimoPago),

@@ -16,7 +16,7 @@ class SocioController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $socios = Socio::where('gimnasio_id', $request->user()->gimnasio_id)
-            ->with('ultimoPago')
+            ->with(['ultimoPago', 'plan'])
             ->when($request->estado, fn($q) => $q->where('estado', $request->estado))
             ->when($request->search, fn($q) => $q->where('nombre', 'like', "%{$request->search}%"))
             ->latest()
@@ -38,6 +38,8 @@ class SocioController extends Controller
     public function show(Request $request, Socio $socio): JsonResponse
     {
         $this->authorizeGimnasio($request, $socio->gimnasio_id);
+
+        $socio->load('plan');
 
         return response()->json(new SocioResource($socio));
     }

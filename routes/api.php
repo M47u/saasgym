@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AsistenciaController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatIaController;
 use App\Http\Controllers\Api\PagoController;
+use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\RutinaController;
 use App\Http\Controllers\Api\SocioController;
 use App\Http\Controllers\Api\SuperAdmin\GimnasioController as SuperAdminGimnasioController;
@@ -56,6 +57,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Rutinas (admin y entrenador)
         Route::apiResource('rutinas', RutinaController::class);
+
+        // Planes: lectura para todos los del gimnasio, escritura solo admin
+        Route::get('/planes',          [PlanController::class, 'index']);
+        Route::get('/planes/{plan}',   [PlanController::class, 'show']);
+        Route::middleware('es_admin')->group(function () {
+            Route::post('/planes',         [PlanController::class, 'store']);
+            Route::put('/planes/{plan}',   [PlanController::class, 'update']);
+            Route::delete('/planes/{plan}',[PlanController::class, 'destroy']);
+        });
 
         // Usuarios/Staff (solo admin)
         Route::middleware('es_admin')->group(function () {
