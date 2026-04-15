@@ -25,9 +25,10 @@ class UpdatePlanRequest extends FormRequest
                     ->whereNull('deleted_at')
                     ->ignore($planId),
             ],
-            'descripcion' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'precio'      => ['sometimes', 'nullable', 'numeric', 'min:0'],
-            'activo'      => ['sometimes', 'boolean'],
+            'descripcion'     => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'precio_efectivo' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'precio_digital'  => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'activo'          => ['sometimes', 'boolean'],
         ];
     }
 

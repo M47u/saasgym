@@ -12,17 +12,21 @@ class Plan extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'planes';
+
     protected $fillable = [
         'gimnasio_id',
         'nombre',
         'descripcion',
-        'precio',
+        'precio_efectivo',
+        'precio_digital',
         'activo',
     ];
 
     protected $casts = [
-        'precio' => 'decimal:2',
-        'activo' => 'boolean',
+        'precio_efectivo' => 'decimal:2',
+        'precio_digital'  => 'decimal:2',
+        'activo'          => 'boolean',
     ];
 
     public function gimnasio(): BelongsTo

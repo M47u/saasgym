@@ -23,9 +23,10 @@ class StorePlanRequest extends FormRequest
                     ->where('gimnasio_id', $gimnasioId)
                     ->whereNull('deleted_at'),
             ],
-            'descripcion' => ['nullable', 'string', 'max:2000'],
-            'precio'      => ['nullable', 'numeric', 'min:0'],
-            'activo'      => ['sometimes', 'boolean'],
+            'descripcion'     => ['nullable', 'string', 'max:2000'],
+            'precio_efectivo' => ['nullable', 'numeric', 'min:0'],
+            'precio_digital'  => ['nullable', 'numeric', 'min:0'],
+            'activo'          => ['sometimes', 'boolean'],
         ];
     }
 
