@@ -17,14 +17,35 @@ const socios  = ref([]);
 
 const metodos = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
 
+function getConceptoDefault() {
+    const mesActual = new Intl.DateTimeFormat('es-AR', { month: 'long' }).format(new Date()).toLowerCase();
+    return `Cuota mensula de ${mesActual}`;
+}
+
 const form = ref({
     socio_id:      '',
     monto:         '',
-    fecha_pago:    new Date().toISOString().slice(0, 7),
+    fecha_pago:    new Date().toISOString().split('T')[0],
     metodo:        'efectivo',
-    concepto:      '',
+    concepto:      getConceptoDefault(),
     observaciones: '',
 });
+
+// Calcula el próximo vencimiento igual que el backend (Carbon::addMonthNoOverflow + skip weekends)
+function calcularProximoPago(fecha) {
+    if (!fecha) return null;
+    const d = new Date(fecha + 'T00:00:00');
+    const day = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + 1);
+    const lastDayOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, lastDayOfMonth));
+    // 0 = domingo, 6 = sábado
+    while (d.getDay() === 0 || d.getDay() === 6) {
+        d.setDate(d.getDate() + 1);
+    }
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
 
 async function loadSocios() {
     const { data } = await axios.get('/socios', { params: { estado: 'activo', per_page: 200 } });
@@ -41,7 +62,7 @@ onMounted(async () => {
         form.value = {
             socio_id:      p.socio_id || '',
             monto:         p.monto || '',
-            fecha_pago:    p.periodo_pago || (p.fecha_pago ? String(p.fecha_pago).slice(0, 7) : ''),
+            fecha_pago:    p.fecha_pago || '',
             metodo:        p.metodo || 'efectivo',
             concepto:      p.concepto || '',
             observaciones: p.observaciones || '',
@@ -58,13 +79,7 @@ async function submit() {
     errors.value = {};
     saving.value = true;
     try {
-        const payload = {
-            ...form.value,
-            // Store period as first day of month in backend.
-            fecha_pago: /^\d{4}-\d{2}$/.test(String(form.value.fecha_pago))
-                ? `${form.value.fecha_pago}-01`
-                : form.value.fecha_pago,
-        };
+        const payload = { ...form.value };
 
         if (isEdit.value) {
             await axios.put(`/pagos/${route.params.id}`, payload);
@@ -154,15 +169,18 @@ function fieldError(field) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                            Período a pagar <span class="text-red-500">*</span>
+                            Fecha de pago <span class="text-red-500">*</span>
                         </label>
                         <input
                             v-model="form.fecha_pago"
-                            type="month"
+                            type="date"
                             required
                             :class="['w-full px-3.5 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition', fieldError('fecha_pago') ? 'border-red-300 bg-red-50' : 'border-gray-300']"
                         />
                         <p v-if="fieldError('fecha_pago')" class="mt-1 text-xs text-red-600">{{ fieldError('fecha_pago') }}</p>
+                        <p v-if="form.fecha_pago" class="mt-1.5 text-xs text-gray-400">
+                            Próximo vencimiento: <span class="font-medium text-gray-600">{{ calcularProximoPago(form.fecha_pago) }}</span>
+                        </p>
                     </div>
                 </div>
 

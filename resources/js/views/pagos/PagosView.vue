@@ -53,13 +53,6 @@ function formatDateTime(d) {
         : dt.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-function formatPeriodo(periodo) {
-    if (!periodo) return '—';
-    const [year, month] = String(periodo).split('-');
-    if (!year || !month) return '—';
-    return `${month}/${year}`;
-}
-
 function formatMoney(v) {
     return '$' + Number(v).toLocaleString('es-AR', { minimumFractionDigits: 2 });
 }
@@ -146,7 +139,7 @@ const totalPagina = () => pagos.value.reduce((s, p) => s + p.monto, 0);
                         <tr class="border-b border-gray-100">
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Socio</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Monto</th>
-                            <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Período</th>
+                            <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Fecha</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Método</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">Concepto</th>
                             <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Registrado</th>
@@ -165,7 +158,7 @@ const totalPagina = () => pagos.value.reduce((s, p) => s + p.monto, 0);
                             <td class="px-4 py-3.5">
                                 <span class="text-sm font-semibold text-emerald-700">{{ formatMoney(pago.monto) }}</span>
                             </td>
-                            <td class="px-4 py-3.5 text-sm text-gray-500 hidden sm:table-cell">{{ formatPeriodo(pago.periodo_pago) }}</td>
+                            <td class="px-4 py-3.5 text-sm text-gray-500 hidden sm:table-cell">{{ formatDate(pago.fecha_pago) }}</td>
                             <td class="px-4 py-3.5">
                                 <BaseBadge :variant="metodoBadgeVariant(pago.metodo)" class="capitalize">{{ pago.metodo }}</BaseBadge>
                             </td>

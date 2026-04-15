@@ -26,7 +26,7 @@ class StoreGimnasioRequest extends FormRequest
             'telefono'  => ['nullable', 'string', 'max:30'],
             'direccion' => ['nullable', 'string', 'max:255'],
             'activo'    => ['sometimes', 'boolean'],
-            'admin_nombre'                => ['required', 'string', 'max:255'],
+            'admin_nombre'                => ['nullable', 'string', 'max:255'],
             'admin_password'              => ['required', 'string', 'min:8', 'confirmed'],
             'admin_password_confirmation' => ['required', 'string', 'min:8'],
         ];

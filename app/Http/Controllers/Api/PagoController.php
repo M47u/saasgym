@@ -44,7 +44,7 @@ class PagoController extends Controller
         if ($ultimoPago) {
             $ultimoMesPagado = Carbon::parse($ultimoPago->fecha_pago)->startOfMonth();
 
-            // Si ya tiene pago en ese mes (o uno posterior), solo permitimos registrar meses siguientes.
+            // Solo bloqueamos si ya existe un pago en el mismo mes o posterior.
             if ($fechaPagoSolicitada->lessThanOrEqualTo($ultimoMesPagado)) {
                 throw ValidationException::withMessages([
                     'fecha_pago' => [
@@ -58,7 +58,6 @@ class PagoController extends Controller
         }
 
         $data = $request->validated();
-        $data['fecha_pago'] = Carbon::parse($data['fecha_pago'])->startOfMonth()->toDateString();
 
         $pago = Pago::create([
             ...$data,
@@ -80,10 +79,6 @@ class PagoController extends Controller
         abort_if($pago->gimnasio_id !== $request->user()->gimnasio_id, 403, 'Sin autorización.');
 
         $data = $request->validated();
-
-        if (isset($data['fecha_pago'])) {
-            $data['fecha_pago'] = Carbon::parse($data['fecha_pago'])->startOfMonth()->toDateString();
-        }
 
         $pago->update($data);
 

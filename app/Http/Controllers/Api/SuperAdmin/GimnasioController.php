@@ -46,7 +46,9 @@ class GimnasioController extends Controller
 
             User::create([
                 'gimnasio_id' => $gimnasio->id,
-                'name'        => $request->admin_nombre,
+                'name'        => $request->filled('admin_nombre')
+                    ? $request->admin_nombre
+                    : "Admin {$gimnasio->nombre}",
                 'email'       => $request->email,
                 'password'    => $request->admin_password,
                 'rol'         => 'admin',
