@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ChatIaController;
 use App\Http\Controllers\Api\PagoController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\RutinaController;
+use App\Http\Controllers\Api\SocioRutinaController;
 use App\Http\Controllers\Api\SocioController;
 use App\Http\Controllers\Api\SuperAdmin\GimnasioController as SuperAdminGimnasioController;
 use App\Http\Controllers\Api\UserController;
@@ -41,6 +42,11 @@ Route::middleware('auth:sanctum')->group(function () {
         // Socios (admin y entrenador pueden ver/crear/editar; solo admin elimina)
         Route::apiResource('socios', SocioController::class)->except(['destroy']);
         Route::delete('/socios/{socio}', [SocioController::class, 'destroy'])->middleware('es_admin');
+
+        // Rutinas de un socio (asignación)
+        Route::get('/socios/{socio}/rutinas', [SocioRutinaController::class, 'index']);
+        Route::post('/socios/{socio}/rutinas/{rutina}', [SocioRutinaController::class, 'store']);
+        Route::delete('/socios/{socio}/rutinas/{rutina}', [SocioRutinaController::class, 'destroy']);
 
         // Pagos (solo admin)
         Route::middleware('es_admin')->group(function () {

@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useUiStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
 import BaseBadge from '@/components/ui/BaseBadge.vue';
+import BaseModal from '@/components/ui/BaseModal.vue';
 import axios from 'axios';
 
 const router = useRouter();
@@ -16,17 +17,29 @@ const loading = ref(true);
 const tab = ref('info');
 const pagos = ref([]);
 const asistencias = ref([]);
+const rutinas = ref([]);
 const tabLoading = ref(false);
+
+// Asignación de rutinas
+const showAsignarModal = ref(false);
+const rutinasPropias = ref([]);      // rutinas del entrenador (para asignar)
+const loadingPropias = ref(false);
+const assigning = ref(false);
+const removingId = ref(null);
 
 const tabs = [
     { key: 'info', label: 'Información' },
     { key: 'pagos', label: 'Pagos', adminOnly: true },
     { key: 'asistencias', label: 'Asistencias' },
+    { key: 'rutinas', label: 'Rutinas' },
 ];
 
 const visibleTabs = computed(() =>
     tabs.filter(t => !t.adminOnly || auth.isAdmin)
 );
+
+// IDs de rutinas ya asignadas al socio
+const rutinaAsignadaIds = computed(() => new Set(rutinas.value.map(r => r.id)));
 
 onMounted(async () => {
     await loadSocio();
@@ -60,7 +73,60 @@ watch(tab, async (newTab) => {
             asistencias.value = data.data || [];
         } finally { tabLoading.value = false; }
     }
+    if (newTab === 'rutinas') {
+        await loadRutinas();
+    }
 });
+
+async function loadRutinas() {
+    tabLoading.value = true;
+    try {
+        const { data } = await axios.get(`/socios/${route.params.id}/rutinas`);
+        rutinas.value = data.data || [];
+    } finally {
+        tabLoading.value = false;
+    }
+}
+
+async function openAsignarModal() {
+    showAsignarModal.value = true;
+    if (rutinasPropias.value.length === 0) {
+        loadingPropias.value = true;
+        try {
+            const { data } = await axios.get('/rutinas', { params: { activa: 1 } });
+            rutinasPropias.value = data.data || [];
+        } finally {
+            loadingPropias.value = false;
+        }
+    }
+}
+
+async function asignarRutina(rutinaId) {
+    assigning.value = true;
+    try {
+        await axios.post(`/socios/${route.params.id}/rutinas/${rutinaId}`);
+        ui.toast('Rutina asignada.', 'success');
+        showAsignarModal.value = false;
+        await loadRutinas();
+    } catch (e) {
+        ui.toast(e?.response?.data?.message || 'Error al asignar la rutina.', 'error');
+    } finally {
+        assigning.value = false;
+    }
+}
+
+async function quitarRutina(rutinaId) {
+    removingId.value = rutinaId;
+    try {
+        await axios.delete(`/socios/${route.params.id}/rutinas/${rutinaId}`);
+        ui.toast('Rutina desasignada.', 'success');
+        rutinas.value = rutinas.value.filter(r => r.id !== rutinaId);
+    } catch (e) {
+        ui.toast(e?.response?.data?.message || 'Error al quitar la rutina.', 'error');
+    } finally {
+        removingId.value = null;
+    }
+}
 
 function estadoVariant(e) {
     return { activo: 'green', inactivo: 'gray', suspendido: 'red' }[e] || 'gray';
@@ -318,8 +384,106 @@ const totalPagado = computed(() => pagos.value.reduce((s, p) => s + p.monto, 0))
                         </div>
                     </div>
 
+                    <!-- Rutinas tab -->
+                    <div v-else-if="tab === 'rutinas'">
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="text-sm text-gray-500">{{ rutinas.length }} rutina{{ rutinas.length !== 1 ? 's' : '' }} asignada{{ rutinas.length !== 1 ? 's' : '' }}</p>
+                            <button
+                                v-if="auth.isEntrenador"
+                                @click="openAsignarModal"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-700 transition-colors"
+                            >
+                                + Asignar rutina
+                            </button>
+                        </div>
+
+                        <div v-if="rutinas.length === 0" class="text-center py-12 text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-10 mx-auto mb-2 opacity-30">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
+                            </svg>
+                            <p class="text-sm">Sin rutinas asignadas</p>
+                        </div>
+
+                        <div v-else class="space-y-2">
+                            <div
+                                v-for="r in rutinas"
+                                :key="r.id"
+                                class="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors group"
+                            >
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-4 text-violet-600">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ r.nombre }}</p>
+                                        <p class="text-xs text-gray-400 truncate">
+                                            {{ r.entrenador?.nombre || '—' }}
+                                            <span v-if="r.ejercicios?.length"> · {{ r.ejercicios.length }} ejercicio{{ r.ejercicios.length !== 1 ? 's' : '' }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <BaseBadge :variant="r.activa ? 'green' : 'gray'">{{ r.activa ? 'Activa' : 'Inactiva' }}</BaseBadge>
+                                    <button
+                                        v-if="auth.isEntrenador && r.entrenador_id === auth.user?.id"
+                                        @click="quitarRutina(r.id)"
+                                        :disabled="removingId === r.id"
+                                        class="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                                        title="Quitar rutina"
+                                    >
+                                        <svg v-if="removingId === r.id" class="animate-spin size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                        </svg>
+                                        <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal: asignar rutina -->
+    <BaseModal :open="showAsignarModal" title="Asignar rutina" @close="showAsignarModal = false">
+        <div v-if="loadingPropias" class="space-y-2 animate-pulse">
+            <div v-for="i in 3" :key="i" class="h-10 bg-gray-100 rounded-lg" />
+        </div>
+        <div v-else-if="rutinasPropias.length === 0" class="text-center py-8 text-gray-400">
+            <p class="text-sm">No tenés rutinas activas creadas.</p>
+        </div>
+        <div v-else class="space-y-2 max-h-80 overflow-y-auto">
+            <button
+                v-for="r in rutinasPropias"
+                :key="r.id"
+                @click="asignarRutina(r.id)"
+                :disabled="rutinaAsignadaIds.has(r.id) || assigning"
+                class="w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="rutinaAsignadaIds.has(r.id) ? 'border-gray-100 bg-gray-50' : 'border-gray-200 hover:border-violet-300 hover:bg-violet-50'"
+            >
+                <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">{{ r.nombre }}</p>
+                    <p v-if="r.ejercicios?.length" class="text-xs text-gray-400">{{ r.ejercicios.length }} ejercicio{{ r.ejercicios.length !== 1 ? 's' : '' }}</p>
+                </div>
+                <span v-if="rutinaAsignadaIds.has(r.id)" class="text-xs text-gray-400 shrink-0 ml-2">Ya asignada</span>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 text-violet-500 shrink-0 ml-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+            </button>
+        </div>
+        <template #footer>
+            <div class="flex justify-end">
+                <button @click="showAsignarModal = false" class="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </template>
+    </BaseModal>
 </template>

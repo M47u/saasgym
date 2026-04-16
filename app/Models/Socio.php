@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -51,9 +52,9 @@ class Socio extends Model
         return $this->hasMany(Asistencia::class);
     }
 
-    public function rutinas(): HasMany
+    public function rutinas(): BelongsToMany
     {
-        return $this->hasMany(Rutina::class);
+        return $this->belongsToMany(Rutina::class, 'rutina_socio')->withTimestamps();
     }
 
     public function chatIa(): HasMany
