@@ -16,7 +16,7 @@ class UpdatePagoRequest extends FormRequest
         return [
             'monto'         => ['sometimes', 'numeric', 'min:0.01'],
             'fecha_pago'    => ['sometimes', 'date'],
-            'metodo'        => ['sometimes', 'in:efectivo,transferencia,tarjeta,otro'],
+            'metodo'        => ['sometimes', 'in:efectivo,transferencia,tarjeta'],
             'concepto'      => ['nullable', 'string', 'max:255'],
             'observaciones' => ['nullable', 'string'],
         ];

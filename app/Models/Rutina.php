@@ -13,29 +13,19 @@ class Rutina extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'gimnasio_id',
-        'socio_id',
         'entrenador_id',
         'nombre',
         'descripcion',
-        'fecha_inicio',
-        'fecha_fin',
         'activa',
     ];
 
     protected $casts = [
-        'fecha_inicio' => 'date',
-        'fecha_fin'    => 'date',
         'activa'       => 'boolean',
     ];
 
     public function gimnasio(): BelongsTo
     {
         return $this->belongsTo(Gimnasio::class);
-    }
-
-    public function socio(): BelongsTo
-    {
-        return $this->belongsTo(Socio::class);
     }
 
     public function entrenador(): BelongsTo

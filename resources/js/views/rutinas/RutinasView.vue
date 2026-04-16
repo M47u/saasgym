@@ -2,12 +2,14 @@
 import { ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUiStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/auth';
 import BaseBadge from '@/components/ui/BaseBadge.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import axios from 'axios';
 
 const router = useRouter();
 const ui = useUiStore();
+const auth = useAuthStore();
 
 const rutinas = ref([]);
 const meta = ref({ current_page: 1, last_page: 1, total: 0 });
@@ -32,11 +34,6 @@ async function load() {
 
 watch(activa, () => { page.value = 1; load(); });
 onMounted(load);
-
-function formatDate(d) {
-    if (!d) return '—';
-    return new Date(d + 'T00:00:00').toLocaleDateString('es-AR');
-}
 
 function confirmDelete(r) {
     deleteTarget.value = r;
@@ -67,6 +64,7 @@ async function doDelete() {
                 <p class="text-sm text-gray-500 mt-0.5">{{ meta.total }} rutinas registradas</p>
             </div>
             <router-link
+                v-if="auth.isEntrenador"
                 to="/rutinas/nueva"
                 class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors shadow-sm"
             >
@@ -119,7 +117,7 @@ async function doDelete() {
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex-1 min-w-0 pr-2">
                             <h3 class="text-sm font-semibold text-gray-900 truncate">{{ r.nombre }}</h3>
-                            <p class="text-xs text-gray-500 mt-0.5 truncate">{{ r.socio?.nombre || '—' }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5 truncate">Rutina general</p>
                         </div>
                         <BaseBadge :variant="r.activa ? 'green' : 'gray'">{{ r.activa ? 'Activa' : 'Inactiva' }}</BaseBadge>
                     </div>
@@ -127,10 +125,6 @@ async function doDelete() {
                     <p v-if="r.descripcion" class="text-xs text-gray-500 mb-3 line-clamp-2">{{ r.descripcion }}</p>
 
                     <div class="flex items-center gap-3 text-xs text-gray-400">
-                        <span v-if="r.fecha_inicio">
-                            {{ formatDate(r.fecha_inicio) }}
-                            <template v-if="r.fecha_fin"> → {{ formatDate(r.fecha_fin) }}</template>
-                        </span>
                         <span v-if="r.ejercicios?.length" class="ml-auto">
                             {{ r.ejercicios.length }} ejercicio{{ r.ejercicios.length !== 1 ? 's' : '' }}
                         </span>
@@ -139,7 +133,7 @@ async function doDelete() {
 
                 <div class="px-5 py-3 border-t border-gray-50 flex items-center justify-between">
                     <p class="text-xs text-gray-400 truncate">{{ r.entrenador?.nombre || 'Sin asignar' }}</p>
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div v-if="auth.isEntrenador" class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             @click="router.push(`/rutinas/${r.id}/editar`)"
                             class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"

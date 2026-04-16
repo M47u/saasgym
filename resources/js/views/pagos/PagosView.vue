@@ -17,7 +17,7 @@ const page = ref(1);
 const deleteTarget = ref(null);
 const deleting = ref(false);
 
-const metodos = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
+const metodos = ['efectivo', 'transferencia', 'tarjeta'];
 
 async function load() {
     loading.value = true;

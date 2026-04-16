@@ -14,11 +14,9 @@ class StoreRutinaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'socio_id'              => ['required', 'integer', 'exists:socios,id'],
             'nombre'                => ['required', 'string', 'max:255'],
             'descripcion'           => ['nullable', 'string'],
-            'fecha_inicio'          => ['nullable', 'date'],
-            'fecha_fin'             => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
+            'activa'                => ['sometimes', 'boolean'],
             'ejercicios'            => ['nullable', 'array'],
             'ejercicios.*.nombre'   => ['required_with:ejercicios', 'string', 'max:255'],
             'ejercicios.*.series'   => ['nullable', 'integer', 'min:1'],

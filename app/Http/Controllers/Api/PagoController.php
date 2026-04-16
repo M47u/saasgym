@@ -34,6 +34,12 @@ class PagoController extends Controller
 
         abort_if($socio->gimnasio_id !== $request->user()->gimnasio_id, 403, 'Sin autorización.');
 
+        if (! $socio->plan_id) {
+            throw ValidationException::withMessages([
+                'socio_id' => ['El socio no tiene un plan asignado. Asignale un plan antes de registrar un pago.'],
+            ]);
+        }
+
         $fechaPagoSolicitada = Carbon::parse($request->fecha_pago)->startOfMonth();
 
         $ultimoPago = Pago::where('gimnasio_id', $request->user()->gimnasio_id)

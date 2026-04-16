@@ -19,7 +19,7 @@ class PagoFactory extends Factory
             'socio_id'      => Socio::factory(),
             'monto'         => fake()->randomFloat(2, 500, 10000),
             'fecha_pago'    => fake()->dateThisYear()->format('Y-m-d'),
-            'metodo'        => fake()->randomElement(['efectivo', 'transferencia', 'tarjeta', 'otro']),
+            'metodo'        => fake()->randomElement(['efectivo', 'transferencia', 'tarjeta']),
             'concepto'      => 'Cuota mensual',
             'observaciones' => null,
         ];

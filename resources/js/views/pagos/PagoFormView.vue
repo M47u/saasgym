@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUiStore } from '@/stores/ui';
 import axios from 'axios';
@@ -22,6 +22,8 @@ const planSocio = computed(() => {
     return socio?.plan ?? null;
 });
 
+const socioSinPlan = computed(() => !!form.value.socio_id && !planSocio.value);
+
 // Precio del plan según el método de pago elegido
 const precioPlanSegunMetodo = computed(() => {
     const plan = planSocio.value;
@@ -33,7 +35,7 @@ const precioPlanSegunMetodo = computed(() => {
     return { valor: precio, label: `$${Number(precio).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` };
 });
 
-const metodos = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
+const metodos = ['efectivo', 'transferencia', 'tarjeta'];
 
 function getConceptoDefault() {
     const mesActual = new Intl.DateTimeFormat('es-AR', { month: 'long' }).format(new Date()).toLowerCase();
@@ -95,6 +97,15 @@ onMounted(async () => {
 
 async function submit() {
     errors.value = {};
+
+    if (socioSinPlan.value) {
+        errors.value = {
+            socio_id: ['El socio no tiene un plan asignado. Asignale un plan antes de registrar un pago.'],
+        };
+        ui.toast('No se puede registrar el pago sin plan asignado.', 'error');
+        return;
+    }
+
     saving.value = true;
     try {
         const payload = { ...form.value };
@@ -122,6 +133,15 @@ async function submit() {
 function fieldError(field) {
     return errors.value[field]?.[0];
 }
+
+watch(
+    precioPlanSegunMetodo,
+    (precio) => {
+        if (isEdit.value) return;
+        form.value.monto = precio?.valor != null ? Number(precio.valor).toFixed(2) : '';
+    },
+    { immediate: true }
+);
 </script>
 
 <template>
@@ -184,6 +204,12 @@ function fieldError(field) {
                         </p>
                         <p v-else class="text-violet-400 mt-0.5 text-xs">Sin precio definido para este método de pago.</p>
                     </div>
+                </div>
+                <div
+                    v-else-if="form.socio_id"
+                    class="px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-sm text-red-700"
+                >
+                    El socio seleccionado no tiene plan asignado. No podés registrar el pago hasta asignarle un plan.
                 </div>
 
                 <!-- Monto / Fecha -->
@@ -268,7 +294,7 @@ function fieldError(field) {
                     </button>
                     <button
                         type="submit"
-                        :disabled="saving"
+                        :disabled="saving || socioSinPlan"
                         class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                     >
                         <svg v-if="saving" class="animate-spin size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

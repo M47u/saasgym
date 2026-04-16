@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Gimnasio;
 use App\Models\Pago;
+use App\Models\Plan;
 use App\Models\Socio;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +18,7 @@ class PagoTest extends TestCase
     private User $entrenador;
     private Gimnasio $gimnasio;
     private Socio $socio;
+    private Plan $plan;
 
     protected function setUp(): void
     {
@@ -25,7 +27,18 @@ class PagoTest extends TestCase
         $this->gimnasio   = Gimnasio::factory()->create();
         $this->admin      = User::factory()->create(['gimnasio_id' => $this->gimnasio->id, 'rol' => 'admin']);
         $this->entrenador = User::factory()->create(['gimnasio_id' => $this->gimnasio->id, 'rol' => 'entrenador']);
-        $this->socio      = Socio::factory()->create(['gimnasio_id' => $this->gimnasio->id]);
+        $this->plan       = Plan::create([
+            'gimnasio_id'      => $this->gimnasio->id,
+            'nombre'           => 'Plan mensual',
+            'descripcion'      => null,
+            'precio_efectivo'  => 5000,
+            'precio_digital'   => 5500,
+            'activo'           => true,
+        ]);
+        $this->socio      = Socio::factory()->create([
+            'gimnasio_id' => $this->gimnasio->id,
+            'plan_id'     => $this->plan->id,
+        ]);
     }
 
     public function test_admin_puede_listar_pagos(): void
@@ -100,5 +113,23 @@ class PagoTest extends TestCase
                  'metodo'     => 'efectivo',
              ])
              ->assertStatus(403);
+    }
+
+    public function test_no_puede_registrar_pago_si_socio_no_tiene_plan(): void
+    {
+        $socioSinPlan = Socio::factory()->create([
+            'gimnasio_id' => $this->gimnasio->id,
+            'plan_id'     => null,
+        ]);
+
+        $this->actingAs($this->admin)
+             ->postJson('/api/pagos', [
+                 'socio_id'   => $socioSinPlan->id,
+                 'monto'      => 5000,
+                 'fecha_pago' => '2026-03-01',
+                 'metodo'     => 'efectivo',
+             ])
+             ->assertStatus(422)
+             ->assertJsonValidationErrors(['socio_id']);
     }
 }

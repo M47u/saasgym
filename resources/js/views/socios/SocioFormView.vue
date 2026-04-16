@@ -90,6 +90,28 @@ async function submit() {
 function fieldError(field) {
     return errors.value[field]?.[0];
 }
+
+function formatPrecio(precio) {
+    const n = Number(precio);
+    return Number.isFinite(n) ? `$${n.toLocaleString('es-AR')}` : null;
+}
+
+function planOptionLabel(plan) {
+    const efectivo = formatPrecio(plan?.precio_efectivo);
+    const digital = formatPrecio(plan?.precio_digital);
+
+    if (efectivo && digital) {
+        return efectivo === digital
+            ? `${plan.nombre} — ${efectivo}`
+            : `${plan.nombre} — Efectivo: ${efectivo} | Digital: ${digital}`;
+    }
+
+    if (efectivo || digital) {
+        return `${plan.nombre} — ${efectivo || digital}`;
+    }
+
+    return plan.nombre;
+}
 </script>
 
 <template>
@@ -181,7 +203,7 @@ function fieldError(field) {
                     >
                         <option value="">Sin plan asignado</option>
                         <option v-for="p in planes" :key="p.id" :value="p.id">
-                            {{ p.nombre }}{{ p.precio !== null ? ` — $${Number(p.precio).toLocaleString('es-AR')}` : '' }}
+                            {{ planOptionLabel(p) }}
                         </option>
                     </select>
                     <p v-if="fieldError('plan_id')" class="mt-1 text-xs text-red-600">{{ fieldError('plan_id') }}</p>

@@ -17,7 +17,7 @@ class StorePagoRequest extends FormRequest
             'socio_id'      => ['required', 'integer', 'exists:socios,id'],
             'monto'         => ['required', 'numeric', 'min:0.01'],
             'fecha_pago'    => ['required', 'date'],
-            'metodo'        => ['required', 'in:efectivo,transferencia,tarjeta,otro'],
+            'metodo'        => ['required', 'in:efectivo,transferencia,tarjeta'],
             'concepto'      => ['nullable', 'string', 'max:255'],
             'observaciones' => ['nullable', 'string'],
         ];

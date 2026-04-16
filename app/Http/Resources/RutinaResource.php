@@ -13,14 +13,7 @@ class RutinaResource extends JsonResource
             'id'           => $this->id,
             'nombre'       => $this->nombre,
             'descripcion'  => $this->descripcion,
-            'fecha_inicio' => $this->fecha_inicio?->toDateString(),
-            'fecha_fin'    => $this->fecha_fin?->toDateString(),
             'activa'       => $this->activa,
-            'socio_id'     => $this->socio_id,
-            'socio'        => $this->whenLoaded('socio', fn() => [
-                'id'     => $this->socio->id,
-                'nombre' => $this->socio->nombre,
-            ]),
             'entrenador_id' => $this->entrenador_id,
             'entrenador'    => $this->whenLoaded('entrenador', fn() => [
                 'id'     => $this->entrenador->id,

@@ -2,18 +2,19 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUiStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 
 const router = useRouter();
 const route  = useRoute();
 const ui     = useUiStore();
+const auth   = useAuthStore();
 
 const isEdit  = computed(() => !!route.params.id);
 const title   = computed(() => isEdit.value ? 'Editar rutina' : 'Nueva rutina');
 const loading = ref(false);
 const saving  = ref(false);
 const errors  = ref({});
-const socios  = ref([]);
 
 const gruposMusculares = [
     'Pecho', 'Espalda', 'Hombros', 'Bíceps', 'Tríceps',
@@ -21,11 +22,8 @@ const gruposMusculares = [
 ];
 
 const form = ref({
-    socio_id:    '',
     nombre:      '',
     descripcion: '',
-    fecha_inicio:'',
-    fecha_fin:   '',
     activa:      true,
     ejercicios:  [],
 });
@@ -42,24 +40,21 @@ function removeEjercicio(index) {
     form.value.ejercicios.splice(index, 1);
 }
 
-async function loadSocios() {
-    const { data } = await axios.get('/socios', { params: { estado: 'activo', per_page: 200 } });
-    socios.value = data.data || [];
-}
-
 onMounted(async () => {
-    await loadSocios();
+    if (!auth.isEntrenador) {
+        ui.toast('Solo los entrenadores pueden crear o editar rutinas.', 'error');
+        router.push('/rutinas');
+        return;
+    }
+
     if (!isEdit.value) return;
     loading.value = true;
     try {
         const { data } = await axios.get(`/rutinas/${route.params.id}`);
         const r = data.data ?? data;
         form.value = {
-            socio_id:     r.socio_id || '',
             nombre:       r.nombre || '',
             descripcion:  r.descripcion || '',
-            fecha_inicio: r.fecha_inicio || '',
-            fecha_fin:    r.fecha_fin || '',
             activa:       r.activa ?? true,
             ejercicios:   (r.ejercicios || []).map(e => ({
                 nombre:             e.nombre || '',
@@ -144,22 +139,6 @@ function fieldError(field) {
                 <div class="space-y-5">
                     <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Datos de la rutina</h2>
 
-                    <!-- Socio -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                            Socio <span class="text-red-500">*</span>
-                        </label>
-                        <select
-                            v-model="form.socio_id"
-                            required
-                            :class="['w-full px-3.5 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition bg-white', fieldError('socio_id') ? 'border-red-300 bg-red-50' : 'border-gray-300']"
-                        >
-                            <option value="" disabled>Seleccioná un socio</option>
-                            <option v-for="s in socios" :key="s.id" :value="s.id">{{ s.nombre }}</option>
-                        </select>
-                        <p v-if="fieldError('socio_id')" class="mt-1 text-xs text-red-600">{{ fieldError('socio_id') }}</p>
-                    </div>
-
                     <!-- Nombre -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">
@@ -184,26 +163,6 @@ function fieldError(field) {
                             placeholder="Objetivo, indicaciones generales..."
                             class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition resize-none"
                         />
-                    </div>
-
-                    <!-- Fechas -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Fecha inicio</label>
-                            <input
-                                v-model="form.fecha_inicio"
-                                type="date"
-                                class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                            />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Fecha fin</label>
-                            <input
-                                v-model="form.fecha_fin"
-                                type="date"
-                                class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                            />
-                        </div>
                     </div>
 
                     <!-- Estado -->

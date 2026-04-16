@@ -16,14 +16,12 @@ const loading = ref(true);
 const tab = ref('info');
 const pagos = ref([]);
 const asistencias = ref([]);
-const rutinas = ref([]);
 const tabLoading = ref(false);
 
 const tabs = [
     { key: 'info', label: 'Información' },
     { key: 'pagos', label: 'Pagos', adminOnly: true },
     { key: 'asistencias', label: 'Asistencias' },
-    { key: 'rutinas', label: 'Rutinas' },
 ];
 
 const visibleTabs = computed(() =>
@@ -60,13 +58,6 @@ watch(tab, async (newTab) => {
         try {
             const { data } = await axios.get('/asistencias', { params: { socio_id: route.params.id } });
             asistencias.value = data.data || [];
-        } finally { tabLoading.value = false; }
-    }
-    if (newTab === 'rutinas' && rutinas.value.length === 0) {
-        tabLoading.value = true;
-        try {
-            const { data } = await axios.get('/rutinas', { params: { socio_id: route.params.id } });
-            rutinas.value = data.data || [];
         } finally { tabLoading.value = false; }
     }
 });
@@ -327,37 +318,6 @@ const totalPagado = computed(() => pagos.value.reduce((s, p) => s + p.monto, 0))
                         </div>
                     </div>
 
-                    <!-- Rutinas tab -->
-                    <div v-else-if="tab === 'rutinas'">
-                        <div class="flex items-center justify-between mb-4">
-                            <p class="text-sm text-gray-500">{{ rutinas.length }} rutinas asignadas</p>
-                            <router-link
-                                to="/rutinas/nueva"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-700 transition-colors"
-                            >
-                                + Nueva rutina
-                            </router-link>
-                        </div>
-                        <div v-if="rutinas.length === 0" class="text-center py-12 text-gray-400">
-                            <p class="text-sm">Sin rutinas asignadas</p>
-                        </div>
-                        <div v-else class="space-y-2">
-                            <div
-                                v-for="r in rutinas"
-                                :key="r.id"
-                                class="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                                @click="router.push(`/rutinas/${r.id}`)"
-                            >
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">{{ r.nombre }}</p>
-                                    <p class="text-xs text-gray-400">{{ r.descripcion || 'Sin descripción' }}</p>
-                                </div>
-                                <BaseBadge :variant="r.activa ? 'green' : 'gray'">
-                                    {{ r.activa ? 'Activa' : 'Inactiva' }}
-                                </BaseBadge>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
